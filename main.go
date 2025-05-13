@@ -1,8 +1,8 @@
 package main
 
 import (
-	"embed"
-	"net/http"
+	"embed"    //将静态文件编译时嵌入到Go里
+	"net/http" //构建http客户端和服务器功能
 	"os"
 	"time"
 
@@ -21,9 +21,9 @@ import (
 )
 
 //go:embed static/*
-var static embed.FS
+var static embed.FS //编译期间将文件或整个目录打包进Go程序里
 
-var version = "devel"
+var version = "devel" //development 开发中的版本
 
 func main() {
 	log.SetHandler(text.New(os.Stderr))
