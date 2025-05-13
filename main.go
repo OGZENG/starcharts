@@ -57,36 +57,36 @@ func main() {
 					Methods(http.MethodGet).
 					Handler(controller.GetRepo(static, github, cache, version))
 	//定义谁来处理什么
-	// generic metrics
-	requestCounter := promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "starcharts",
-		Subsystem: "http",
-		Name:      "requests_total",
-		Help:      "total requests",
-	}, []string{"code", "method"})
-	responseObserver := promauto.NewSummaryVec(prometheus.SummaryOpts{
+	// generic metrics 设置Prometheus指标，用于监控HTTP请求的数量和响应时间
+	requestCounter := promauto.NewCounterVec(prometheus.CounterOpts{ //记录所有HTTP请求的数量
+		Namespace: "starcharts",     //指标前缀，用于归类
+		Subsystem: "http",           //子系统
+		Name:      "requests_total", //指标名
+		Help:      "total requests", //指标说明
+	}, []string{"code", "method"}) //标签，用于区分不同类型的请求
+	responseObserver := promauto.NewSummaryVec(prometheus.SummaryOpts{ //记录响应时间和次数
 		Namespace: "starcharts",
 		Subsystem: "http",
 		Name:      "responses",
 		Help:      "response times and counts",
 	}, []string{"code", "method"})
 
-	r.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.Handler())
+	r.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.Handler()) //注册metrics路由
 
-	srv := &http.Server{
-		Handler: httplog.New(
-			promhttp.InstrumentHandlerDuration(
+	srv := &http.Server{ //创建一个HTTP服务器
+		Handler: httplog.New( //把每个请求的基本信息打印成日志
+			promhttp.InstrumentHandlerDuration( //记录响应时间
 				responseObserver,
-				promhttp.InstrumentHandlerCounter(
+				promhttp.InstrumentHandlerCounter( //记录请求数量
 					requestCounter,
-					r,
+					r, //mux路由器
 				),
 			),
 		),
-		Addr:         config.Listen,
+		Addr:         config.Listen, //指定监听地址
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
-	ctx.Info("starting up...")
+	ctx.Info("starting up...") //日志输出，表明服务正在启动
 	ctx.WithError(srv.ListenAndServe()).Error("failed to start up server")
-}
+} //真正启动HTTP服务
